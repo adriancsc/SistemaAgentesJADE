@@ -1,17 +1,28 @@
-# Sistema Multiagente para Simulación de Mercado Financiero
+Sistema Multiagente para Gestión de Requisitos y Pruebas
+Descripción del Proyecto
 
-Este proyecto implementa un sistema de simulación de mercado utilizando el framework JADE (Java Agent Development Framework), donde agentes autónomos colaboran entre si.
+Este proyecto implementa un sistema multiagente basado en el framework JADE que simula el proceso completo de gestión de requisitos y casos de prueba en el desarrollo de software. Los agentes colaboran autónomamente para transformar historias de usuario en casos de prueba mediante un proceso distribuido y especializado.
+🤖 Agentes y Funcionalidades
+Agentes Principales
+Agente	Función Principal	Servicio Registrado
+POAgent	Product Owner que genera Historias de Usuario	creador-hu
+CUAgent	Transforma Historias de Usuario en Casos de Uso	procesador-cu
+RFAgent	Deriva Requisitos Funcionales de Historias de Usuario	procesador-rf
+TestCaseAgent	Genera Casos de Prueba a partir de CUs y RFs	generador-cp
+Flujo de Trabajo
 
-link: 
+    POAgent genera Historias de Usuario y las distribuye
 
-## 🚀 Tecnologías
+    CUAgent y RFAgent procesan las HUs en paralelo
 
-- Java JDK 8+
-- [JADE Framework](https://jade.tilab.com/)
-- Maven (para gestión de dependencias)
+    TestCaseAgent recibe CUs y RFs para generar Casos de Prueba
 
-## 📦 Instalación
+    Todo el sistema utiliza el Directory Facilitator de JADE para descubrimiento de servicios
 
-1. Clona el repositorio:
-```bash
-git clone https://github.com/adrianesc/SistemaAgentesJADE.git
+🛠️ Tecnologías Utilizadas
+
+    Java JDK 8+
+
+    JADE Framework (Java Agent DEvelopment Framework)
+
+    Maven para gestión de dependencias
