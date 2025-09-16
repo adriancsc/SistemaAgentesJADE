@@ -2,24 +2,27 @@ package com.ejemplo.jade.agents;
 
 import com.ejemplo.jade.model.CasoDeUso;
 import com.ejemplo.jade.model.HistoriaUsuario;
+import com.ejemplo.jade.services.CUDispatcher;
+import com.ejemplo.jade.services.HUtoCUProcessor;
 
 import jade.core.Agent;
+import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
-/**
- * CUAgent: especialista en extraer Casos de Uso desde una HU.
- * - Se registra en DF con type="procesar-hu"
- * - Al generar CU lo manda a agentes "generar-cp"
- */
 public class CUAgent extends Agent {
+    private CUDispatcher dispatcher;
+    private HUtoCUProcessor processor;
+
     @Override
     protected void setup() {
         System.out.println(getLocalName() + ": iniciado. Registrándome como 'procesar-hu'.");
 
+        // Registrar servicio
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         ServiceDescription sd = new ServiceDescription();
@@ -29,58 +32,46 @@ public class CUAgent extends Agent {
         try {
             DFService.register(this, dfd);
         } catch (FIPAException e) {
-            System.err.println("Error al registrar el agente en DF: " + e.getMessage());
+            System.err.println("Error al registrar: " + e.getMessage());
         }
 
-        addBehaviour(new jade.core.behaviours.CyclicBehaviour() {
+        // Inicializar servicios auxiliares
+        dispatcher = new CUDispatcher(this);
+        processor = new HUtoCUProcessor();
+
+        // Comportamiento principal
+        addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
                 ACLMessage msg = receive();
-                if (msg != null) {
-                    String content = msg.getContent();
-                    if (content != null && content.startsWith("HU|")) {
-                        HistoriaUsuario hu = HistoriaUsuario.fromContentString(content);
-                        System.out.println(getLocalName() + ": Recibí HU -> " + hu);
+                if (msg != null && msg.getContent() != null && msg.getContent().startsWith("HU|")) {
+                    HistoriaUsuario hu = HistoriaUsuario.fromContentString(msg.getContent());
+                    System.out.println(getLocalName() + ": Recibí HU -> " + hu);
 
-                        // Generar CU simple basado en palabras clave (simulación)
-                        String cuId = "CU-" + hu.getId();
-                        String titulo;
-                        String texto = hu.getTexto().toLowerCase();
-                        if (texto.contains("registr")) {
-                            titulo = "Registrar nuevo usuario";
-                        } else if (texto.contains("login") || texto.contains("iniciar sesión") || texto.contains("autenticar")) {
-                            titulo = "Iniciar sesión (login)";
-                        } else if (texto.contains("comprar") || texto.contains("pagar")) {
-                            titulo = "Proceso de compra y pago";
-                        } else {
-                            titulo = "Caso de uso genérico derivado de HU";
-                        }
+                    addBehaviour(new WakerBehaviour(myAgent, 1000) {
+                        @Override
+                        protected void onWake() {
+                            // Procesar HU
+                            CasoDeUso cu = processor.procesarHU(hu);
+                            System.out.println(getLocalName() + ": CU generado -> " + cu);
 
-                        CasoDeUso cuObj = new CasoDeUso(cuId, titulo);
-                        System.out.println(getLocalName() + ": Generé -> " + cuObj);
+                            // Buscar agentes destino
+                            DFAgentDescription template = new DFAgentDescription();
+                            ServiceDescription sd2 = new ServiceDescription();
+                            sd2.setType("generar-cp");
+                            template.addServices(sd2);
 
-                        // Buscar "generar-cp" en DF y enviar
-                        DFAgentDescription template = new DFAgentDescription();
-                        ServiceDescription sd2 = new ServiceDescription();
-                        sd2.setType("generar-cp");
-                        template.addServices(sd2);
-                        try {
-                            DFAgentDescription[] gens = DFService.search(myAgent, template);
-                            if (gens.length == 0) {
-                                System.out.println(getLocalName() + ": No encontré servicio 'generar-cp'.");
-                            } else {
-                                ACLMessage out = new ACLMessage(ACLMessage.INFORM);
-                                out.setContent(cuObj.toContentString());
-                                for (DFAgentDescription g : gens) {
-                                    out.addReceiver(g.getName());
-                                }
-                                send(out);
-                                System.out.println(getLocalName() + ": Envié CU a generador de CP.");
+                            try {
+                                DFAgentDescription[] gens = DFService.search(myAgent, template);
+                                dispatcher.sendCU(cu, gens);
+
+                                System.out.println(getLocalName() + 
+                ": Procesamiento finalizado con éxito. CU enviado a " + gens.length + " agente(s).");
+                            } catch (FIPAException fe) {
+                                System.err.println("FIPAException: " + fe.getMessage());
                             }
-                        } catch (FIPAException fe) {
-                            System.err.println("FIPAException: " + fe.getMessage());
                         }
-                    }
+                    });
                 } else {
                     block();
                 }
@@ -90,10 +81,10 @@ public class CUAgent extends Agent {
 
     @Override
     protected void takeDown() {
-        try { 
-            DFService.deregister(this); 
-        } catch (FIPAException e) { 
-            System.err.println("Error al desregistrar el agente: " + e.getMessage());
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException e) {
+            System.err.println("Error al desregistrar: " + e.getMessage());
         }
     }
 }

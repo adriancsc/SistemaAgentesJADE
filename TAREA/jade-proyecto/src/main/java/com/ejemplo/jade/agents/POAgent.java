@@ -1,78 +1,54 @@
 package com.ejemplo.jade.agents;
 
 import com.ejemplo.jade.model.HistoriaUsuario;
+import com.ejemplo.jade.services.HUDispatcher;
+import com.ejemplo.jade.utils.DFUtils;
 
 import jade.core.Agent;
-import jade.domain.DFService;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
 
-/**
- * POAgent: genera HU (varias) y las envía a agentes que estén registrados como "procesar-hu".
- * Usa DFService para descubrir proveedores dinámicamente (páginas amarillas).
- */
 public class POAgent extends Agent {
+    private HUDispatcher dispatcher;
+
     @Override
     protected void setup() {
-        System.out.println(getLocalName() + ": iniciado. Registrándome en DF como 'creador-hu'.");
+        System.out.println(getLocalName() + ": iniciado.");
+        DFUtils.registerService(this, "creador-hu", "PO-HU-Service");
 
-        // Registrarse en DF (opcional: para que otros agentes sepan que existe un creador de HU)
-        DFAgentDescription dfd = new DFAgentDescription();
-        dfd.setName(getAID());
-        ServiceDescription sd = new ServiceDescription();
-        sd.setType("creador-hu");
-        sd.setName("PO-HU-Service");
-        dfd.addServices(sd);
-        try {
-            DFService.register(this, dfd);
-        } catch (FIPAException e) {
-            System.err.println("Error al registrar el agente en DF: " + e.getMessage());
-        }
+        dispatcher = new HUDispatcher(this);
 
-        // Enviar varias HU (simulación)
-        HistoriaUsuario[] hus = new HistoriaUsuario[] {
+        HistoriaUsuario[] hus = {
             new HistoriaUsuario("HU1", "Como cliente quiero registrarme para acceder a mi cuenta"),
             new HistoriaUsuario("HU2", "Como cliente quiero iniciar sesión con email y contraseña"),
             new HistoriaUsuario("HU3", "Como cliente quiero comprar un producto y pagar con tarjeta")
         };
 
-        // Buscar proveedores del servicio "procesar-hu" en DF
-        DFAgentDescription template = new DFAgentDescription();
-        ServiceDescription templateSD = new ServiceDescription();
-        templateSD.setType("procesar-hu");
-        template.addServices(templateSD);
-
         try {
-            DFAgentDescription[] providers = DFService.search(this, template);
+            DFAgentDescription[] providers = DFUtils.searchService(this, "procesar-hu");
             if (providers.length == 0) {
-                System.out.println(getLocalName() + ": No hay agentes registrados para 'procesar-hu' (DF vacío).");
+                System.out.println(getLocalName() + ": No hay agentes para 'procesar-hu'.");
             } else {
-                System.out.println(getLocalName() + ": Encontré " + providers.length + " proveedores de 'procesar-hu'. Enviando HUs...");
                 for (HistoriaUsuario hu : hus) {
-                    ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-                    msg.setContent(hu.toContentString());
-                    // enviar a todos los proveedores encontrados
-                    for (DFAgentDescription provider : providers) {
-                        msg.addReceiver(provider.getName());
-                    }
-                    send(msg);
-                    System.out.println(getLocalName() + ": Envié -> " + hu);
+                    addBehaviour(new WakerBehaviour(this, 500 + (int)(Math.random() * 5000)) {
+                        @Override
+                        protected void onWake() {
+                            dispatcher.sendHU(hu, providers);
+
+                            System.out.println(getLocalName() + 
+                            ": HU procesada y enviada con éxito -> " + hu.getId());
+                        }
+                    });
                 }
             }
         } catch (FIPAException e) {
-            System.err.println("Error al desregistrar el agente del DF: " + e.getMessage());
+            System.err.println(getLocalName() + ": Error al buscar en DF -> " + e.getMessage());
         }
     }
 
     @Override
     protected void takeDown() {
-        // Desregistrarse del DF
-        try {
-            DFService.deregister(this);
-        } catch (FIPAException e) {
-            System.err.println("Error al desregistrar el agente del DF: " + e.getMessage());
-        }
+        DFUtils.deregisterService(this);
     }
 }
