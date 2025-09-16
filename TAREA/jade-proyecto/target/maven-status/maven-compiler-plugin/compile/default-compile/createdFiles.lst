@@ -1,0 +1,13 @@
+com\ejemplo\jade\agents\RFAgent$1.class
+com\ejemplo\jade\agents\POAgent.class
+com\ejemplo\jade\model\CasoDeUso.class
+com\ejemplo\jade\model\HistoriaUsuario.class
+com\ejemplo\jade\model\RequisitoFuncional.class
+com\ejemplo\TestJade.class
+com\ejemplo\jade\agents\CUAgent.class
+com\ejemplo\jade\model\CasoDePrueba.class
+com\ejemplo\jade\agents\TestCaseAgent.class
+com\ejemplo\jade\agents\TestCaseAgent$1.class
+com\ejemplo\jade\MainContainer.class
+com\ejemplo\jade\agents\RFAgent.class
+com\ejemplo\jade\agents\CUAgent$1.class
