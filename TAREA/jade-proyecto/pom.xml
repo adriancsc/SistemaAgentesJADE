@@ -26,8 +26,9 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>com.example.TestJade</mainClass>
+                    <mainClass>com.ejemplo.jade.MainContainer</mainClass>
                 </configuration>
+
             </plugin>
         </plugins>
     </build>
