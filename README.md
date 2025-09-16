@@ -1,15 +1,10 @@
 Sistema Multiagente para Gestión de Requisitos y Pruebas
+
 Descripción del Proyecto
 
-Este proyecto implementa un sistema multiagente basado en el framework JADE que simula el proceso completo de gestión de requisitos y casos de prueba en el desarrollo de software. Los agentes colaboran autónomamente para transformar historias de usuario en casos de prueba mediante un proceso distribuido y especializado.
-🤖 Agentes y Funcionalidades
-Agentes Principales
-Agente	Función Principal	Servicio Registrado
-POAgent	Product Owner que genera Historias de Usuario	creador-hu
-CUAgent	Transforma Historias de Usuario en Casos de Uso	procesador-cu
-RFAgent	Deriva Requisitos Funcionales de Historias de Usuario	procesador-rf
-TestCaseAgent	Genera Casos de Prueba a partir de CUs y RFs	generador-cp
-Flujo de Trabajo
+El presente proyecto desarrolla un sistema multiagente sobre el framework JADE (Java Agent DEvelopment Framework), orientado a la simulación del proceso de gestión de requisitos y casos de prueba en el desarrollo de software. JADE ofrece una infraestructura que facilita la comunicación, autonomía y cooperación entre agentes, lo que lo convierte en una herramienta idónea para modelar procesos distribuidos y colaborativos.
+En este sistema, cada agente cumple un rol especializado: el POAgent genera historias de usuario, el CUAgent las transforma en casos de uso, el RFAgent deriva requisitos funcionales y el TestCaseAgent produce los casos de prueba. De esta forma, se automatiza un flujo de trabajo típico en ingeniería de software, asegurando trazabilidad y reduciendo errores humanos.
+
 
     POAgent genera Historias de Usuario y las distribuye
 
